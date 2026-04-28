@@ -169,38 +169,38 @@ async def state(update, context):
 async def city(update, context):
     if is_restart(update.message.text): return await restart(update, context)
     context.user_data["city"] = update.message.text
-    await update.message.reply_text("Interested in strangers?", reply_markup=restart_keyboard(["Yes","No"]))
+    await update.message.reply_text("Are you interested in having s*x with strangers?", reply_markup=restart_keyboard(["Yes","No"]))
     return Q1
 
 async def q1(update, context):
     if is_restart(update.message.text): return await restart(update, context)
-    await update.message.reply_text("Multiple partners?", reply_markup=restart_keyboard(["Yes","No"]))
+    await update.message.reply_text("Are you interested in having s*x with multiple people?", reply_markup=restart_keyboard(["Yes","No"]))
     return Q2
 
 async def q2(update, context):
     if is_restart(update.message.text): return await restart(update, context)
-    await update.message.reply_text("Video calls?", reply_markup=restart_keyboard(["Yes","No"]))
+    await update.message.reply_text("Are you interested in making n*de video calls?", reply_markup=restart_keyboard(["Yes","No"]))
     return Q3
 
 async def q3(update, context):
     if is_restart(update.message.text): return await restart(update, context)
-    await update.message.reply_text("Meet outdoors?", reply_markup=restart_keyboard(["Yes","No"]))
+    await update.message.reply_text("Are you interested in having s*x outdoors?", reply_markup=restart_keyboard(["Yes","No"]))
     return Q4
 
 async def q4(update, context):
     if is_restart(update.message.text): return await restart(update, context)
-    await update.message.reply_text("Share photos?", reply_markup=restart_keyboard(["Yes","No"]))
+    await update.message.reply_text("Are you interested in recording while having s*x?", reply_markup=restart_keyboard(["Yes","No"]))
     return Q5
 
 async def q5(update, context):
     if is_restart(update.message.text): return await restart(update, context)
-    await update.message.reply_text("Gender preference?", reply_markup=restart_keyboard(["Male","Female"]))
+    await update.message.reply_text("Select your gender:", reply_markup=restart_keyboard(["Male","Female"]))
     return GENDER
 
 async def gender(update, context):
     if is_restart(update.message.text): return await restart(update, context)
     context.user_data["gender"] = update.message.text
-    await update.message.reply_text("Ideal type?", reply_markup=restart_keyboard(["Younger","Older","Does not matter"]))
+    await update.message.reply_text("Select your ideal type", reply_markup=restart_keyboard(["Younger","Older","Does not matter"]))
     return IDEAL
 
 # ---------------- PROFILES ----------------
@@ -330,8 +330,8 @@ async def handle_utr(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         await update.message.reply_text(
-            "✅ Payment received\n\n"
-            "🔒 Join premium community:\n"
+            "✅ Payment received profile under verification \n\n"
+            "🔒 Join the approval group:\n"
             f"{PRIVATE_LINK}"
         )
 
