@@ -124,15 +124,42 @@ NAME, AGE, STATE, CITY, Q1, Q2, Q3, Q4, Q5, GENDER, IDEAL = range(11)
 
 # ---------------- HELPERS ----------------
 def restart_keyboard(options):
-    return ReplyKeyboardMarkup([options, ["🔄 Restart"]], resize_keyboard=True)
+
+    rows = []
+
+    rows.append(options)
+
+    rows.append(["🔄 Restart"])
+
+    return ReplyKeyboardMarkup(
+        rows,
+        resize_keyboard=True
+    )
 
 def is_restart(text):
     return text == "🔄 Restart"
 
 # ---------------- RESTART ----------------
+
 async def restart(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
     context.user_data.clear()
-    await update.message.reply_text("🔄 Restarted\n\nEnter your name:")
+
+    try:
+        await update.message.delete()
+    except:
+        pass
+
+    await update.message.reply_text(
+        "🔄 Restarted Successfully\n\n"
+        "All previous details were cleared.\n\n"
+        "Enter your name:",
+        reply_markup=ReplyKeyboardMarkup(
+            [["🔄 Restart"]],
+            resize_keyboard=True
+        )
+    )
+
     return NAME
 
 # ---------------- START ----------------
@@ -364,7 +391,12 @@ def main():
             GENDER: [MessageHandler(filters.TEXT, gender)],
             IDEAL: [MessageHandler(filters.TEXT, ideal)],
         },
-        fallbacks=[]
+        fallbacks=[
+    MessageHandler(
+        filters.Regex("^🔄 Restart$"),
+        restart
+    )
+]
     )
 
     app.add_handler(conv)
@@ -373,6 +405,12 @@ def main():
     app.add_handler(CommandHandler("top", top))
 
     print("Bot running...")
+    app.add_handler(
+    MessageHandler(
+        filters.Regex("^🔄 Restart$"),
+        restart
+    )
+)
     app.run_polling()
 
 if __name__ == "__main__":
