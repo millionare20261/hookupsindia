@@ -39,6 +39,9 @@ PAYMENT_MESSAGE = (
 )
 # ---------------- STORAGE ----------------
 PROFILE_LIKES = defaultdict(int)
+USERS_DB = set()
+
+BROADCAST_WAITING = {}
 
 PROFILES_DB = { ("Male","Younger"):[
 {"name":"Ananya","age":22,"photo":"AgACAgUAAxkBAAK-yGnbJu-dxuoVwcPDgQt_vVCHr8uKAAJfDmsb20fgVqmkrHoxdKvPAQADAgADeQADOwQ"},
@@ -165,6 +168,7 @@ async def restart(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ---------------- START ----------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
+    USERS_DB.add(user.id)
 
     await context.bot.send_message(
         ADMIN_ID,
@@ -361,6 +365,65 @@ async def handle_utr(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "🔒 Join the approval group:\n"
             f"{PRIVATE_LINK}"
         )
+# ---------------- BROADCAST ----------------
+
+async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if update.effective_user.id != ADMIN_ID:
+        return
+
+    BROADCAST_WAITING[update.effective_user.id] = True
+
+    await update.message.reply_text(
+        "📢 Send the photo with caption to broadcast."
+    )
+
+
+async def handle_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    user_id = update.effective_user.id
+
+    if user_id != ADMIN_ID:
+        return
+
+    if not BROADCAST_WAITING.get(user_id):
+        return
+
+    if not update.message.photo:
+        await update.message.reply_text(
+            "❌ Please send a photo with caption."
+        )
+        return
+
+    photo = update.message.photo[-1].file_id
+
+    caption = update.message.caption or ""
+
+    success = 0
+    failed = 0
+
+    for uid in USERS_DB:
+
+        try:
+
+            await context.bot.send_photo(
+                chat_id=uid,
+                photo=photo,
+                caption=caption
+            )
+
+            success += 1
+
+        except:
+            failed += 1
+
+    BROADCAST_WAITING[user_id] = False
+
+    await update.message.reply_text(
+        f"✅ Broadcast Finished\n\n"
+        f"✔ Success: {success}\n"
+        f"❌ Failed: {failed}"
+    )
 
 # ---------------- TOP ----------------
 async def top(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -403,6 +466,14 @@ def main():
     app.add_handler(CallbackQueryHandler(button))
     app.add_handler(MessageHandler(filters.TEXT, handle_utr))
     app.add_handler(CommandHandler("top", top))
+    app.add_handler(CommandHandler("broadcast", broadcast))
+
+app.add_handler(
+    MessageHandler(
+        filters.PHOTO,
+        handle_broadcast
+    )
+)
 
     print("Bot running...")
     app.add_handler(
