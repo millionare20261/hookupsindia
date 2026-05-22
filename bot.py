@@ -48,6 +48,7 @@ PAYMENT_MESSAGE = (
 PROFILE_LIKES = defaultdict(int)
 
 ALL_USERS = set()
+BLOCKED_USERS = set()
 USERS_FILE = "users.txt"
 
 # ================= PROFILES =================
@@ -207,6 +208,13 @@ async def restart(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ================= START =================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if update.effective_user.id in BLOCKED_USERS:
+
+        await update.message.reply_text(
+            "❌ You are blocked from using this bot."
+        )
+
+        return ConversationHandler.END
 
     user = update.effective_user
 
@@ -645,6 +653,27 @@ async def top(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(text)
 
+async def block(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if update.effective_user.id != ADMIN_ID:
+        return
+
+    if not context.args:
+
+        await update.message.reply_text(
+            "Usage:\n/block USER_ID"
+        )
+
+        return
+
+    user_id = int(context.args[0])
+
+    BLOCKED_USERS.add(user_id)
+
+    await update.message.reply_text(
+        f"✅ User {user_id} blocked."
+    )
+
 
 # ================= MAIN =================
 
@@ -742,6 +771,8 @@ def main():
     app.add_handler(
         CommandHandler("top", top)
     )
+
+    app.add_handler(CommandHandler("block", block))
 
     # BROADCAST COMMAND
     app.add_handler(
