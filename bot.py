@@ -435,8 +435,8 @@ async def top(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(text)
 
-# ---------------- MAIN ----------------
 def main():
+
     app = Application.builder().token(TOKEN).build()
 
     conv = ConversationHandler(
@@ -455,34 +455,47 @@ def main():
             IDEAL: [MessageHandler(filters.TEXT, ideal)],
         },
         fallbacks=[
-    MessageHandler(
-        filters.Regex("^🔄 Restart$"),
-        restart
-    )
-]
+            MessageHandler(
+                filters.Regex("^🔄 Restart$"),
+                restart
+            )
+        ]
     )
 
+    # Restart handler
+    app.add_handler(
+        MessageHandler(
+            filters.Regex("^🔄 Restart$"),
+            restart
+        )
+    )
+
+    # Conversation
     app.add_handler(conv)
+
+    # Buttons
     app.add_handler(CallbackQueryHandler(button))
+
+    # UTR
     app.add_handler(MessageHandler(filters.TEXT, handle_utr))
+
+    # Top command
     app.add_handler(CommandHandler("top", top))
+
+    # Broadcast system
     app.add_handler(CommandHandler("broadcast", broadcast))
 
-app.add_handler(
-    MessageHandler(
-        filters.PHOTO,
-        handle_broadcast
+    app.add_handler(
+        MessageHandler(
+            filters.PHOTO,
+            handle_broadcast
+        )
     )
-)
 
     print("Bot running...")
-    app.add_handler(
-    MessageHandler(
-        filters.Regex("^🔄 Restart$"),
-        restart
-    )
-)
+
     app.run_polling()
+
 
 if __name__ == "__main__":
     main()
