@@ -1,12 +1,14 @@
 import os
 import re
 from collections import defaultdict
+
 from telegram import (
     Update,
     ReplyKeyboardMarkup,
     InlineKeyboardButton,
     InlineKeyboardMarkup
 )
+
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -17,11 +19,14 @@ from telegram.ext import (
     filters
 )
 
-# ---------------- CONFIG ----------------
+# ================= CONFIG =================
 
 TOKEN = os.getenv("BOT_TOKEN")
+
 ADMIN_ID = 1638005081
+
 PRIVATE_LINK = "https://t.me/+XWovofCRdOE0Mzk1"
+
 QR_IMAGE = "AgACAgUAAxkBAALLGWnbZnI_-2awAZVOxaoGgUnyUsrNAAIWD2sb20fgVsvJ2nHqOReTAQADAgADeQADOwQ"
 
 PAGE_SIZE = 5
@@ -37,12 +42,14 @@ PAYMENT_MESSAGE = (
     "💰 Original Price: ₹2499 ❌\n"
     "🔥 Offer Price: ₹999"
 )
-# ---------------- STORAGE ----------------
+
+# ================= STORAGE =================
+
 PROFILE_LIKES = defaultdict(int)
-USERS_DB = set()
 
-BROADCAST_WAITING = {}
+ALL_USERS = set()
 
+# ================= PROFILES =================
 PROFILES_DB = { ("Male","Younger"):[
 {"name":"Ananya","age":22,"photo":"AgACAgUAAxkBAAK-yGnbJu-dxuoVwcPDgQt_vVCHr8uKAAJfDmsb20fgVqmkrHoxdKvPAQADAgADeQADOwQ"},
 {"name":"Priya","age":23,"photo":"AgACAgUAAxkBAAK-zGnbJxyG4j-r15VXx_ofzDLrQ634AAJgDmsb20fgVvm1BSUlHna_AQADAgADeQADOwQ"},
@@ -122,17 +129,19 @@ PROFILES_DB = { ("Male","Younger"):[
 ],
 
 }
-# ---------------- STATES ----------------
+
+# ================= STATES =================
+
 NAME, AGE, STATE, CITY, Q1, Q2, Q3, Q4, Q5, GENDER, IDEAL = range(11)
 
-# ---------------- HELPERS ----------------
+# ================= HELPERS =================
+
 def restart_keyboard(options):
 
-    rows = []
-
-    rows.append(options)
-
-    rows.append(["🔄 Restart"])
+    rows = [
+        options,
+        ["🔄 Restart"]
+    ]
 
     return ReplyKeyboardMarkup(
         rows,
@@ -142,7 +151,12 @@ def restart_keyboard(options):
 def is_restart(text):
     return text == "🔄 Restart"
 
-# ---------------- RESTART ----------------
+# ================= ERROR HANDLER =================
+
+async def error_handler(update, context):
+    print(f"ERROR: {context.error}")
+
+# ================= RESTART =================
 
 async def restart(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -150,7 +164,7 @@ async def restart(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         await update.message.delete()
-    except:
+    except Exception:
         pass
 
     await update.message.reply_text(
@@ -165,83 +179,168 @@ async def restart(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     return NAME
 
-# ---------------- START ----------------
+# ================= START =================
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
     user = update.effective_user
+
     ALL_USERS.add(user.id)
 
     await context.bot.send_message(
         ADMIN_ID,
-        f"🆕 NEW USER\n\n👤 {user.first_name}\n📛 @{user.username}\n🆔 {user.id}"
+        f"🆕 NEW USER\n\n"
+        f"👤 {user.first_name}\n"
+        f"📛 @{user.username}\n"
+        f"🆔 {user.id}"
     )
 
-    await update.message.reply_text("Enter your name:")
+    await update.message.reply_text(
+        "Enter your name:",
+        reply_markup=ReplyKeyboardMarkup(
+            [["🔄 Restart"]],
+            resize_keyboard=True
+        )
+    )
+
     return NAME
 
-# ---------------- FLOW ----------------
+# ================= FLOW =================
+
 async def name(update, context):
-    if is_restart(update.message.text): return await restart(update, context)
+
+    if is_restart(update.message.text):
+        return await restart(update, context)
+
     context.user_data["name"] = update.message.text
+
     await update.message.reply_text("Enter your age:")
+
     return AGE
 
 async def age(update, context):
-    if is_restart(update.message.text): return await restart(update, context)
+
+    if is_restart(update.message.text):
+        return await restart(update, context)
+
     context.user_data["age"] = update.message.text
+
     await update.message.reply_text("Enter your state:")
+
     return STATE
 
 async def state(update, context):
-    if is_restart(update.message.text): return await restart(update, context)
+
+    if is_restart(update.message.text):
+        return await restart(update, context)
+
     context.user_data["state"] = update.message.text
+
     await update.message.reply_text("Enter your city:")
+
     return CITY
 
 async def city(update, context):
-    if is_restart(update.message.text): return await restart(update, context)
+
+    if is_restart(update.message.text):
+        return await restart(update, context)
+
     context.user_data["city"] = update.message.text
-    await update.message.reply_text("Are you interested in having s*x with strangers?", reply_markup=restart_keyboard(["Yes","No"]))
+
+    await update.message.reply_text(
+        "Are you interested in having s*x with strangers?",
+        reply_markup=restart_keyboard(["Yes", "No"])
+    )
+
     return Q1
 
 async def q1(update, context):
-    if is_restart(update.message.text): return await restart(update, context)
-    await update.message.reply_text("Are you interested in having s*x with multiple people?", reply_markup=restart_keyboard(["Yes","No"]))
+
+    if is_restart(update.message.text):
+        return await restart(update, context)
+
+    await update.message.reply_text(
+        "Are you interested in having s*x with multiple people?",
+        reply_markup=restart_keyboard(["Yes", "No"])
+    )
+
     return Q2
 
 async def q2(update, context):
-    if is_restart(update.message.text): return await restart(update, context)
-    await update.message.reply_text("Are you interested in making n*de video calls?", reply_markup=restart_keyboard(["Yes","No"]))
+
+    if is_restart(update.message.text):
+        return await restart(update, context)
+
+    await update.message.reply_text(
+        "Are you interested in making n*de video calls?",
+        reply_markup=restart_keyboard(["Yes", "No"])
+    )
+
     return Q3
 
 async def q3(update, context):
-    if is_restart(update.message.text): return await restart(update, context)
-    await update.message.reply_text("Are you interested in having s*x outdoors?", reply_markup=restart_keyboard(["Yes","No"]))
+
+    if is_restart(update.message.text):
+        return await restart(update, context)
+
+    await update.message.reply_text(
+        "Are you interested in having s*x outdoors?",
+        reply_markup=restart_keyboard(["Yes", "No"])
+    )
+
     return Q4
 
 async def q4(update, context):
-    if is_restart(update.message.text): return await restart(update, context)
-    await update.message.reply_text("Are you interested in recording while having s*x?", reply_markup=restart_keyboard(["Yes","No"]))
+
+    if is_restart(update.message.text):
+        return await restart(update, context)
+
+    await update.message.reply_text(
+        "Are you interested in recording while having s*x?",
+        reply_markup=restart_keyboard(["Yes", "No"])
+    )
+
     return Q5
 
 async def q5(update, context):
-    if is_restart(update.message.text): return await restart(update, context)
-    await update.message.reply_text("Select your gender:", reply_markup=restart_keyboard(["Male","Female"]))
+
+    if is_restart(update.message.text):
+        return await restart(update, context)
+
+    await update.message.reply_text(
+        "Select your gender:",
+        reply_markup=restart_keyboard(["Male", "Female"])
+    )
+
     return GENDER
 
 async def gender(update, context):
-    if is_restart(update.message.text): return await restart(update, context)
+
+    if is_restart(update.message.text):
+        return await restart(update, context)
+
     context.user_data["gender"] = update.message.text
-    await update.message.reply_text("Select your ideal type", reply_markup=restart_keyboard(["Younger","Older","Does not matter"]))
+
+    await update.message.reply_text(
+        "Select your ideal type",
+        reply_markup=restart_keyboard(
+            ["Younger", "Older", "Does not matter"]
+        )
+    )
+
     return IDEAL
 
-# ---------------- PROFILES ----------------
+# ================= FINAL STEP =================
+
 async def ideal(update, context):
-    if is_restart(update.message.text): return await restart(update, context)
+
+    if is_restart(update.message.text):
+        return await restart(update, context)
 
     context.user_data["ideal_type"] = update.message.text
+
     context.user_data["index"] = 0
 
-    # SEND CLEAN DATA TO ADMIN
     await context.bot.send_message(
         chat_id=ADMIN_ID,
         text=(
@@ -251,61 +350,105 @@ async def ideal(update, context):
             f"📍 Location: {context.user_data.get('city')}, {context.user_data.get('state')}\n"
             f"❤️ Preference: {context.user_data.get('gender')}\n"
             f"💭 Ideal Type: {context.user_data.get('ideal_type')}\n\n"
-            "──────────────\n"
             f"🆔 ID: {update.effective_user.id}\n"
             f"📛 @{update.effective_user.username}"
         )
     )
 
     await send_profiles(update, context)
+
     return ConversationHandler.END
 
+# ================= SEND PROFILES =================
+
 async def send_profiles(update, context):
+
     chat_id = update.effective_chat.id
+
     profiles = PROFILES_DB.get(
-        (context.user_data["gender"], context.user_data["ideal_type"]), []
+        (
+            context.user_data["gender"],
+            context.user_data["ideal_type"]
+        ),
+        []
     )
 
     index = context.user_data.get("index", 0)
-    page = profiles[index:index+PAGE_SIZE]
+
+    page = profiles[index:index + PAGE_SIZE]
+
+    if not page:
+        await context.bot.send_message(
+            chat_id,
+            "❌ No more profiles available."
+        )
+        return
 
     for p in page:
+
         caption = (
             f"{p['name']}, {p['age']}\n"
             f"📍 {context.user_data.get('city')}, {context.user_data.get('state')}"
         )
 
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton(f"💬 Chat with {p['name']}", callback_data=f"chat_{p['name']}")]
+            [
+                InlineKeyboardButton(
+                    f"💬 Chat with {p['name']}",
+                    callback_data=f"chat_{p['name']}"
+                )
+            ]
         ])
 
-        await context.bot.send_photo(chat_id, p["photo"], caption=caption, reply_markup=keyboard)
+        await context.bot.send_photo(
+            chat_id=chat_id,
+            photo=p["photo"],
+            caption=caption,
+            reply_markup=keyboard
+        )
 
     context.user_data["index"] += PAGE_SIZE
 
     await context.bot.send_message(
         chat_id,
-        "Load more",
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔄 Load More", callback_data="load_more")]])
+        "Load more profiles",
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(
+                    "🔄 Load More",
+                    callback_data="load_more"
+                )
+            ]
+        ])
     )
 
-# ---------------- BUTTON ----------------
+# ================= BUTTONS =================
+
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
     query = update.callback_query
+
     await query.answer()
 
     data = query.data
-    user = query.from_user
 
     if data == "load_more":
+
         await send_profiles(update, context)
 
     elif data.startswith("chat_"):
+
         name = data.split("_")[1]
+
         PROFILE_LIKES[name] += 1
 
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("💳 Continue to Payment", callback_data="show_qr")]
+            [
+                InlineKeyboardButton(
+                    "💳 Continue to Payment",
+                    callback_data="show_qr"
+                )
+            ]
         ])
 
         await query.message.reply_text(
@@ -318,7 +461,12 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["awaiting_utr"] = True
 
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("✅ I Paid", callback_data="paid")]
+            [
+                InlineKeyboardButton(
+                    "✅ I Paid",
+                    callback_data="paid"
+                )
+            ]
         ])
 
         await context.bot.send_photo(
@@ -326,27 +474,40 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             photo=QR_IMAGE,
             caption=(
                 "📸 Scan the QR code to complete your payment.\n\n"
-                "After payment, click 'I Paid' and enter your UTR."
+                "After payment click 'I Paid' and enter your UTR."
             ),
             reply_markup=keyboard
         )
 
     elif data == "paid":
-        context.user_data["awaiting_utr"] = True
-        await query.message.reply_text("Enter your UTR (12–16 digits):")
 
-# ---------------- UTR ----------------
+        context.user_data["awaiting_utr"] = True
+
+        await query.message.reply_text(
+            "Enter your UTR (12–16 digits):"
+        )
+
+# ================= UTR =================
+
 async def handle_utr(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if update.message.text.startswith("/"):
+        return
 
     if context.user_data.get("awaiting_utr"):
 
         utr = update.message.text.strip()
 
         if not re.fullmatch(r"\d{12,16}", utr):
-            await update.message.reply_text("❌ Invalid UTR")
+
+            await update.message.reply_text(
+                "❌ Invalid UTR"
+            )
+
             return
 
         user = update.effective_user
+
         context.user_data["awaiting_utr"] = False
 
         await context.bot.send_message(
@@ -361,85 +522,12 @@ async def handle_utr(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         await update.message.reply_text(
-            "✅ Payment received profile under verification \n\n"
+            "✅ Payment received. Profile under verification.\n\n"
             "🔒 Join the approval group:\n"
             f"{PRIVATE_LINK}"
         )
-# ---------------- BROADCAST ----------------
 
-async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    if update.effective_user.id != ADMIN_ID:
-        return
-
-    BROADCAST_WAITING[update.effective_user.id] = True
-
-    await update.message.reply_text(
-        "📢 Send the photo with caption to broadcast."
-    )
-
-
-async def handle_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    user_id = update.effective_user.id
-
-    if user_id != ADMIN_ID:
-        return
-
-    if not BROADCAST_WAITING.get(user_id):
-        return
-
-    if not update.message.photo:
-        await update.message.reply_text(
-            "❌ Please send a photo with caption."
-        )
-        return
-
-    photo = update.message.photo[-1].file_id
-
-    caption = update.message.caption or ""
-
-    success = 0
-    failed = 0
-
-    for uid in USERS_DB:
-
-        try:
-
-            await context.bot.send_photo(
-                chat_id=uid,
-                photo=photo,
-                caption=caption
-            )
-
-            success += 1
-
-        except:
-            failed += 1
-
-    BROADCAST_WAITING[user_id] = False
-
-    await update.message.reply_text(
-        f"✅ Broadcast Finished\n\n"
-        f"✔ Success: {success}\n"
-        f"❌ Failed: {failed}"
-    )
-
-# ---------------- TOP ----------------
-async def top(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    sorted_data = sorted(PROFILE_LIKES.items(), key=lambda x: x[1], reverse=True)
-
-    text = "🔥 Top Profiles\n\n"
-    for i, (name, count) in enumerate(sorted_data[:10], 1):
-        text += f"{i}. {name} ❤️ {count}\n"
-
-    await update.message.reply_text(text)
-
-# ---------------- USER STORAGE ----------------
-
-ALL_USERS = set()
-
-# ---------------- BROADCAST ----------------
+# ================= BROADCAST =================
 
 async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -450,14 +538,11 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         "📢 Broadcast Mode Enabled\n\n"
-        "Send the photo with caption now."
+        "Send photo with caption now."
     )
-
-# ---------------- HANDLE BROADCAST ----------------
 
 async def handle_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    # Save all users automatically
     ALL_USERS.add(update.effective_user.id)
 
     if not context.user_data.get("broadcast_mode"):
@@ -467,6 +552,11 @@ async def handle_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if not update.message.photo:
+
+        await update.message.reply_text(
+            "❌ Send a photo with caption."
+        )
+
         return
 
     photo = update.message.photo[-1].file_id
@@ -479,6 +569,7 @@ async def handle_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for user_id in ALL_USERS:
 
         try:
+
             await context.bot.send_photo(
                 chat_id=user_id,
                 photo=photo,
@@ -487,7 +578,7 @@ async def handle_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             success += 1
 
-        except:
+        except Exception:
             failed += 1
 
     context.user_data["broadcast_mode"] = False
@@ -498,25 +589,84 @@ async def handle_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"❌ Failed: {failed}"
     )
 
+# ================= TOP =================
+
+async def top(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    sorted_data = sorted(
+        PROFILE_LIKES.items(),
+        key=lambda x: x[1],
+        reverse=True
+    )
+
+    text = "🔥 Top Profiles\n\n"
+
+    for i, (name, count) in enumerate(sorted_data[:10], 1):
+        text += f"{i}. {name} ❤️ {count}\n"
+
+    await update.message.reply_text(text)
+
+# ================= MAIN =================
+
 def main():
 
     app = Application.builder().token(TOKEN).build()
 
+    app.add_error_handler(error_handler)
+
     conv = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
+
+        entry_points=[
+            CommandHandler("start", start)
+        ],
+
         states={
-            NAME: [MessageHandler(filters.TEXT, name)],
-            AGE: [MessageHandler(filters.TEXT, age)],
-            STATE: [MessageHandler(filters.TEXT, state)],
-            CITY: [MessageHandler(filters.TEXT, city)],
-            Q1: [MessageHandler(filters.TEXT, q1)],
-            Q2: [MessageHandler(filters.TEXT, q2)],
-            Q3: [MessageHandler(filters.TEXT, q3)],
-            Q4: [MessageHandler(filters.TEXT, q4)],
-            Q5: [MessageHandler(filters.TEXT, q5)],
-            GENDER: [MessageHandler(filters.TEXT, gender)],
-            IDEAL: [MessageHandler(filters.TEXT, ideal)],
+
+            NAME: [
+                MessageHandler(filters.TEXT, name)
+            ],
+
+            AGE: [
+                MessageHandler(filters.TEXT, age)
+            ],
+
+            STATE: [
+                MessageHandler(filters.TEXT, state)
+            ],
+
+            CITY: [
+                MessageHandler(filters.TEXT, city)
+            ],
+
+            Q1: [
+                MessageHandler(filters.TEXT, q1)
+            ],
+
+            Q2: [
+                MessageHandler(filters.TEXT, q2)
+            ],
+
+            Q3: [
+                MessageHandler(filters.TEXT, q3)
+            ],
+
+            Q4: [
+                MessageHandler(filters.TEXT, q4)
+            ],
+
+            Q5: [
+                MessageHandler(filters.TEXT, q5)
+            ],
+
+            GENDER: [
+                MessageHandler(filters.TEXT, gender)
+            ],
+
+            IDEAL: [
+                MessageHandler(filters.TEXT, ideal)
+            ]
         },
+
         fallbacks=[
             MessageHandler(
                 filters.Regex("^🔄 Restart$"),
@@ -525,7 +675,8 @@ def main():
         ]
     )
 
-    # Restart handler
+    app.add_handler(conv)
+
     app.add_handler(
         MessageHandler(
             filters.Regex("^🔄 Restart$"),
@@ -533,19 +684,17 @@ def main():
         )
     )
 
-    # Conversation
-    app.add_handler(conv)
-
-    # Buttons
     app.add_handler(CallbackQueryHandler(button))
 
-    # UTR
-    app.add_handler(MessageHandler(filters.TEXT, handle_utr))
+    app.add_handler(
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            handle_utr
+        )
+    )
 
-    # Top command
     app.add_handler(CommandHandler("top", top))
 
-    # Broadcast system
     app.add_handler(CommandHandler("broadcast", broadcast))
 
     app.add_handler(
@@ -559,6 +708,7 @@ def main():
 
     app.run_polling()
 
+# ================= RUN =================
 
 if __name__ == "__main__":
     main()
