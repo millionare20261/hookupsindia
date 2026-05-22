@@ -48,6 +48,7 @@ PAYMENT_MESSAGE = (
 PROFILE_LIKES = defaultdict(int)
 
 ALL_USERS = set()
+USERS_FILE = "users.txt"
 
 # ================= PROFILES =================
 PROFILES_DB = { ("Male","Younger"):[
@@ -130,6 +131,30 @@ PROFILES_DB = { ("Male","Younger"):[
 
 }
 
+def load_users():
+
+    try:
+
+        with open(USERS_FILE, "r") as f:
+
+            for line in f:
+
+                ALL_USERS.add(int(line.strip()))
+
+    except FileNotFoundError:
+
+        pass
+
+def save_user(user_id):
+
+    if user_id not in ALL_USERS:
+
+        ALL_USERS.add(user_id)
+
+        with open(USERS_FILE, "a") as f:
+
+            f.write(f"{user_id}\n")
+
 # ================= STATES =================
 
 NAME, AGE, STATE, CITY, Q1, Q2, Q3, Q4, Q5, GENDER, IDEAL = range(11)
@@ -185,7 +210,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
 
-    ALL_USERS.add(user.id)
+    save_user(user.id)
 
     await context.bot.send_message(
         ADMIN_ID,
@@ -624,6 +649,7 @@ async def top(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ================= MAIN =================
 
 def main():
+    load_users()
 
     app = Application.builder().token(TOKEN).build()
 
