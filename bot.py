@@ -206,9 +206,9 @@ async def restart(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return NAME
 
 # ================= START =================
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if update.effective_user.id in BLOCKED_USERS:
+
+    if update.effective_user.id in BLOCKED_USERS:
 
         await update.message.reply_text(
             "❌ You are blocked from using this bot."
