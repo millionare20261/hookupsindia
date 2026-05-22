@@ -531,42 +531,52 @@ async def handle_utr(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    # ONLY ADMIN CAN USE
     if update.effective_user.id != ADMIN_ID:
         return
 
+    # ENABLE BROADCAST MODE
     context.user_data["broadcast_mode"] = True
 
     await update.message.reply_text(
         "📢 Broadcast Mode Enabled\n\n"
-        "Send photo with caption now."
+        "Now send photo with caption."
     )
+
+
+# ================= HANDLE BROADCAST =================
 
 async def handle_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    ALL_USERS.add(update.effective_user.id)
-
-    if not context.user_data.get("broadcast_mode"):
-        return
-
+    # ONLY ADMIN
     if update.effective_user.id != ADMIN_ID:
         return
 
+    # CHECK MODE
+    if not context.user_data.get("broadcast_mode"):
+        return
+
+    # REQUIRE PHOTO
     if not update.message.photo:
 
         await update.message.reply_text(
-            "❌ Send a photo with caption."
+            "❌ Send photo with caption."
         )
 
         return
 
     photo = update.message.photo[-1].file_id
-
     caption = update.message.caption or ""
 
     success = 0
     failed = 0
 
+    # SEND TO ALL USERS
     for user_id in ALL_USERS:
+
+        # SKIP ADMIN
+        if user_id == ADMIN_ID:
+            continue
 
         try:
 
@@ -578,9 +588,13 @@ async def handle_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             success += 1
 
-        except Exception:
+        except Exception as e:
+
+            print(f"Failed {user_id}: {e}")
+
             failed += 1
 
+    # TURN OFF MODE
     context.user_data["broadcast_mode"] = False
 
     await update.message.reply_text(
@@ -606,13 +620,12 @@ async def top(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(text)
 
+
 # ================= MAIN =================
 
 def main():
 
     app = Application.builder().token(TOKEN).build()
-
-    app.add_error_handler(error_handler)
 
     conv = ConversationHandler(
 
@@ -675,8 +688,10 @@ def main():
         ]
     )
 
+    # CONVERSATION
     app.add_handler(conv)
 
+    # RESTART
     app.add_handler(
         MessageHandler(
             filters.Regex("^🔄 Restart$"),
@@ -684,8 +699,12 @@ def main():
         )
     )
 
-    app.add_handler(CallbackQueryHandler(button))
+    # BUTTONS
+    app.add_handler(
+        CallbackQueryHandler(button)
+    )
 
+    # UTR HANDLER
     app.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND,
@@ -693,10 +712,17 @@ def main():
         )
     )
 
-    app.add_handler(CommandHandler("top", top))
+    # TOP COMMAND
+    app.add_handler(
+        CommandHandler("top", top)
+    )
 
-    app.add_handler(CommandHandler("broadcast", broadcast))
+    # BROADCAST COMMAND
+    app.add_handler(
+        CommandHandler("broadcast", broadcast)
+    )
 
+    # HANDLE BROADCAST PHOTO
     app.add_handler(
         MessageHandler(
             filters.PHOTO,
