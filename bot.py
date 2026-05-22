@@ -168,7 +168,7 @@ async def restart(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ---------------- START ----------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    USERS_DB.add(user.id)
+    ALL_USERS.add(user.id)
 
     await context.bot.send_message(
         ADMIN_ID,
@@ -434,6 +434,69 @@ async def top(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text += f"{i}. {name} ❤️ {count}\n"
 
     await update.message.reply_text(text)
+
+# ---------------- USER STORAGE ----------------
+
+ALL_USERS = set()
+
+# ---------------- BROADCAST ----------------
+
+async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if update.effective_user.id != ADMIN_ID:
+        return
+
+    context.user_data["broadcast_mode"] = True
+
+    await update.message.reply_text(
+        "📢 Broadcast Mode Enabled\n\n"
+        "Send the photo with caption now."
+    )
+
+# ---------------- HANDLE BROADCAST ----------------
+
+async def handle_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    # Save all users automatically
+    ALL_USERS.add(update.effective_user.id)
+
+    if not context.user_data.get("broadcast_mode"):
+        return
+
+    if update.effective_user.id != ADMIN_ID:
+        return
+
+    if not update.message.photo:
+        return
+
+    photo = update.message.photo[-1].file_id
+
+    caption = update.message.caption or ""
+
+    success = 0
+    failed = 0
+
+    for user_id in ALL_USERS:
+
+        try:
+            await context.bot.send_photo(
+                chat_id=user_id,
+                photo=photo,
+                caption=caption
+            )
+
+            success += 1
+
+        except:
+            failed += 1
+
+    context.user_data["broadcast_mode"] = False
+
+    await update.message.reply_text(
+        f"✅ Broadcast Completed\n\n"
+        f"✔ Sent: {success}\n"
+        f"❌ Failed: {failed}"
+    )
 
 def main():
 
